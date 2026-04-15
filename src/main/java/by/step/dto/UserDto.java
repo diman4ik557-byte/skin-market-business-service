@@ -1,5 +1,6 @@
 package by.step.dto;
 
+import by.step.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +17,7 @@ public class UserDto {
     private Long id;
     private String username;
     private String email;
-    private String role;
+    private UserRole role;
     private BigDecimal balance;
     private LocalDateTime registeredAt;
 }

@@ -1,0 +1,24 @@
+  mkdir -p src/main/resources
+    cat > src/main/resources/application.yaml << 'EOF'
+  server:
+    port: 8082
+
+  spring:
+    application:
+      name: business-service
+
+  data-service:
+    url: http://localhost:8081
+
+  logging:
+    level:
+      by.step.business: DEBUG
+      org.springframework.cloud.openfeign: DEBUG
+
+  feign:
+    client:
+      config:
+        default:
+          connect-timeout: 5000
+          read-timeout: 5000
+    EOF

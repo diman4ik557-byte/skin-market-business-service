@@ -1,5 +1,6 @@
 package by.step.dto;
 
+import by.step.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +19,7 @@ public class OrderDto {
     private String customerName;
     private Long artistId;
     private String artistName;
-    private String status;
+    private OrderStatus status;
     private String description;
     private BigDecimal price;
     private String finalFileUrl;
