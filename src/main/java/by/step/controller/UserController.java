@@ -47,6 +47,30 @@ public class UserController {
             @PathVariable Long userId,
             @RequestParam BigDecimal amount) {
         userBusinessService.addToBalance(userId, amount);
-        return ResponseEntity.ok(ApiResponseDto.success("Баланс обновлён", null));
+        return ResponseEntity.ok(ApiResponseDto.success("Balance added successfully", null));
+    }
+
+    @PostMapping("/{userId}/balance/subtract")
+    public ResponseEntity<ApiResponseDto<Void>> subtractFromBalance(
+            @PathVariable Long userId,
+            @RequestParam BigDecimal amount) {
+        userBusinessService.subtractFromBalance(userId, amount);
+        return ResponseEntity.ok(ApiResponseDto.success("Balance subtracted successfully", null));
+    }
+
+    @PutMapping("/{userId}/balance")
+    public ResponseEntity<ApiResponseDto<Void>> updateBalance(
+            @PathVariable Long userId,
+            @RequestParam BigDecimal newBalance) {
+        userBusinessService.updateBalance(userId, newBalance);
+        return ResponseEntity.ok(ApiResponseDto.success("Balance updated successfully", null));
+    }
+
+    @GetMapping("/{userId}/balance/sufficient")
+    public ResponseEntity<ApiResponseDto<Boolean>> hasEnoughBalance(
+            @PathVariable Long userId,
+            @RequestParam BigDecimal amount) {
+        boolean result = userBusinessService.hasEnoughBalance(userId, amount);
+        return ResponseEntity.ok(ApiResponseDto.success(result));
     }
 }

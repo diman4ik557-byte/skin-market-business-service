@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(name = "data-service", url = "${data-service.url:http://localhost:8081}")
+@FeignClient(name = "data-service", url = "${data-service.url}")
 public interface DataServiceClient {
 
     // User endpoints
