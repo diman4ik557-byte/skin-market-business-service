@@ -20,31 +20,49 @@ public class UserBusinessServiceImpl implements UserBusinessService {
 
     @Override
     public UserDto getUserById(Long id) {
-        log.info("Getting user by id: id={}", id);
+        log.info("Получение пользователя по Id: id={}", id);
         return dataServiceClient.getUserById(id);
     }
 
     @Override
     public UserDto getUserByUsername(String username) {
-        log.info("Getting user by username: username={}", username);
+        log.info("Получение пользователя по имени: username={}", username);
         return dataServiceClient.getUserByUsername(username);
     }
 
     @Override
     public List<UserDto> getAllUsers() {
-        log.info("Getting all users");
+        log.info("Получение всех пользователе2");
         return dataServiceClient.getAllUsers();
     }
 
     @Override
     public List<UserDto> getUsersByRole(UserRole role) {
-        log.info("Getting users by role: role={}", role);
+        log.info("Получение пользователей по ролям: role={}", role);
         return dataServiceClient.getUsersByRole(role);
     }
 
     @Override
     public void addToBalance(Long userId, BigDecimal amount) {
-        log.info("Adding to balance: userId={}, amount={}", userId, amount);
+        log.info("Пополнение баланса: userId={}, amount={}", userId, amount);
         dataServiceClient.addToBalance(userId, amount);
+    }
+
+    @Override
+    public void subtractFromBalance(Long userId, BigDecimal amount) {
+        log.info("Снятие баланса: userId={}, amount={}", userId, amount);
+        dataServiceClient.subtractFromBalance(userId, amount);
+    }
+
+    @Override
+    public void updateBalance(Long userId, BigDecimal newBalance) {
+        log.info("Обновление баланса: userId={}, newBalance={}", userId, newBalance);
+        dataServiceClient.updateBalance(userId, newBalance);
+    }
+
+    @Override
+    public boolean hasEnoughBalance(Long userId, BigDecimal amount) {
+        log.info("Проверка баланса: userId={}, amount={}", userId, amount);
+        return dataServiceClient.hasEnoughBalance(userId, amount);
     }
 }

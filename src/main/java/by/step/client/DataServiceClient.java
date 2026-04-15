@@ -26,8 +26,18 @@ public interface DataServiceClient {
     @GetMapping("/api/users/role/{role}")
     List<UserDto> getUsersByRole(@PathVariable("role") UserRole role);
 
+    // Методы работы с балансом
     @PostMapping("/api/users/{id}/balance/add")
     void addToBalance(@PathVariable("id") Long id, @RequestParam BigDecimal amount);
+
+    @PostMapping("/api/users/{id}/balance/subtract")
+    void subtractFromBalance(@PathVariable("id") Long id, @RequestParam BigDecimal amount);
+
+    @PutMapping("/api/users/{id}/balance")
+    void updateBalance(@PathVariable("id") Long id, @RequestParam BigDecimal balance);
+
+    @GetMapping("/api/users/{id}/balance/sufficient")
+    boolean hasEnoughBalance(@PathVariable("id") Long id, @RequestParam BigDecimal amount);
 
     // Order endpoints
     @PostMapping("/api/orders")

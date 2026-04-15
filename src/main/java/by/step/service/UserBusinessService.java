@@ -17,4 +17,10 @@ public interface UserBusinessService {
     List<UserDto> getUsersByRole(UserRole role);
 
     void addToBalance(Long userId, BigDecimal amount);
+
+    void subtractFromBalance(Long userId, BigDecimal amount);
+
+    void updateBalance(Long userId, BigDecimal newBalance);
+
+    boolean hasEnoughBalance(Long userId, BigDecimal amount);
 }

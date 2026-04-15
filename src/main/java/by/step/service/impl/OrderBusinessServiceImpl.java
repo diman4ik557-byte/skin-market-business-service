@@ -21,7 +21,7 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
 
     @Override
     public OrderDto createOrder(CreateOrderRequestDto request) {
-        log.info("Creating order: customerId={}, artistId={}, price={}",
+        log.info("Создание заказа: customerId={}, artistId={}, price={}",
                 request.getCustomerId(), request.getArtistId(), request.getPrice());
 
         return dataServiceClient.createOrder(
@@ -34,61 +34,61 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
 
     @Override
     public OrderDto getOrder(Long orderId) {
-        log.info("Getting order: orderId={}", orderId);
+        log.info("Получение заказа: orderId={}", orderId);
         return dataServiceClient.getOrderById(orderId);
     }
 
     @Override
     public List<OrderDto> getOrdersByCustomer(Long customerId) {
-        log.info("Getting orders by customer: customerId={}", customerId);
+        log.info("Получение заказов от заказчика: customerId={}", customerId);
         return dataServiceClient.getOrdersByCustomer(customerId);
     }
 
     @Override
     public List<OrderDto> getOrdersByArtist(Long artistId) {
-        log.info("Getting orders by artist: artistId={}", artistId);
+        log.info("Получение заказов от художника: artistId={}", artistId);
         return dataServiceClient.getOrdersByArtist(artistId);
     }
 
     @Override
     public List<OrderDto> getOrdersByStatus(OrderStatus status) {
-        log.info("Getting orders by status: status={}", status);
+        log.info("Получение заказов по статусу: status={}", status);
         return dataServiceClient.getOrdersByStatus(status);
     }
 
     @Override
     public void updateOrderStatus(Long orderId, OrderStatus status) {
-        log.info("Updating order status: orderId={}, status={}", orderId, status);
+        log.info("Обновление статуса заказа: orderId={}, status={}", orderId, status);
         dataServiceClient.updateOrderStatus(orderId, status);
     }
 
     @Override
     public void updateFinalFile(Long orderId, String fileUrl) {
-        log.info("Updating final file: orderId={}, fileUrl={}", orderId, fileUrl);
+        log.info("Обновление финального файла: orderId={}, fileUrl={}", orderId, fileUrl);
         dataServiceClient.updateFinalFile(orderId, fileUrl);
     }
 
     @Override
     public void startOrder(Long orderId) {
-        log.info("Starting order: orderId={}", orderId);
+        log.info("Открытие заказа: orderId={}", orderId);
         dataServiceClient.startOrder(orderId);
     }
 
     @Override
     public void completeOrder(Long orderId) {
-        log.info("Completing order: orderId={}", orderId);
+        log.info("Закрытие заказа: orderId={}", orderId);
         dataServiceClient.completeOrder(orderId);
     }
 
     @Override
     public void cancelOrder(Long orderId) {
-        log.info("Cancelling order: orderId={}", orderId);
+        log.info("Отмена заказа: orderId={}", orderId);
         dataServiceClient.cancelOrder(orderId);
     }
 
     @Override
     public BigDecimal getArtistEarnings(Long artistId) {
-        log.info("Getting artist earnings: artistId={}", artistId);
+        log.info("Получение переводов художника: artistId={}", artistId);
         return dataServiceClient.getArtistEarnings(artistId);
     }
 
