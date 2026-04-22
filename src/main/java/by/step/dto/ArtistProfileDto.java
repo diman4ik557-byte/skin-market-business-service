@@ -16,9 +16,12 @@ public class ArtistProfileDto {
     private Long id;
     private Long profileId;
     private String username;
+    private String avatarUrl;
+    private Long studioId;
     private String studioName;
-    private List<String> styles;
+    private String styles;
     private BigDecimal minPrice;
     private Integer averageTime;
     private Boolean isAvailable;
+    private List<String> socialLinks;
 }
