@@ -6,11 +6,14 @@ import by.step.dto.OrderDto;
 import by.step.enums.OrderStatus;
 import by.step.service.impl.OrderBusinessServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -83,23 +87,25 @@ class OrderBusinessServiceTest {
     @Test
     void getOrdersByCustomer_delegatesToClient() {
         List<OrderDto> orders = Collections.singletonList(testOrderDto);
-        when(dataServiceClient.getOrdersByCustomer(1L)).thenReturn(orders);
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(orders));
 
         List<OrderDto> result = orderBusinessService.getOrdersByCustomer(1L);
 
         assertThat(result).hasSize(1);
-        verify(dataServiceClient, times(1)).getOrdersByCustomer(1L);
+        verify(dataServiceClient, times(1)).getOrdersByCustomer(eq(1L), any(Pageable.class));
     }
 
     @Test
     void getOrdersByArtist_delegatesToClient() {
         List<OrderDto> orders = Collections.singletonList(testOrderDto);
-        when(dataServiceClient.getOrdersByArtist(2L)).thenReturn(orders);
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(orders));
 
         List<OrderDto> result = orderBusinessService.getOrdersByArtist(2L);
 
         assertThat(result).hasSize(1);
-        verify(dataServiceClient, times(1)).getOrdersByArtist(2L);
+        verify(dataServiceClient, times(1)).getOrdersByArtist(eq(2L), any(Pageable.class));
     }
 
     @Test
@@ -117,8 +123,8 @@ class OrderBusinessServiceTest {
         OrderDto completed2 = OrderDto.builder().price(BigDecimal.valueOf(200)).status(OrderStatus.COMPLETED).build();
         OrderDto inProgress = OrderDto.builder().price(BigDecimal.valueOf(300)).status(OrderStatus.IN_PROGRESS).build();
 
-        when(dataServiceClient.getOrdersByCustomer(1L)).thenReturn(Arrays.asList(completed1,
-                completed2, inProgress));
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Arrays.asList(completed1, completed2, inProgress)));
 
         BigDecimal total = orderBusinessService.calculateTotalSpent(1L);
 
@@ -131,11 +137,349 @@ class OrderBusinessServiceTest {
         OrderDto completed2 = OrderDto.builder().status(OrderStatus.COMPLETED).build();
         OrderDto inProgress = OrderDto.builder().status(OrderStatus.IN_PROGRESS).build();
 
-        when(dataServiceClient.getOrdersByArtist(2L)).thenReturn(Arrays.asList(completed1,
-                completed2, inProgress));
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Arrays.asList(completed1, completed2, inProgress)));
 
         long count = orderBusinessService.getCompletedOrdersCount(2L);
 
         assertThat(count).isEqualTo(2);
+    }
+
+    // дополнительные тесты
+
+    @Test
+    @DisplayName("Получение заказов по статусу - успех")
+    void getOrdersByStatus_ShouldReturnOrders() {
+        List<OrderDto> orders = Collections.singletonList(testOrderDto);
+        when(dataServiceClient.getOrdersByStatus(eq(OrderStatus.NEW), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(orders));
+
+        List<OrderDto> result = orderBusinessService.getOrdersByStatus(OrderStatus.NEW);
+
+        assertThat(result).hasSize(1);
+        verify(dataServiceClient, times(1)).getOrdersByStatus(eq(OrderStatus.NEW), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Получение заказов по статусу - ошибка API, возвращает пустой список")
+    void getOrdersByStatus_WhenException_ReturnsEmptyList() {
+        when(dataServiceClient.getOrdersByStatus(eq(OrderStatus.NEW), any(Pageable.class)))
+                .thenThrow(new RuntimeException("API Error"));
+
+        List<OrderDto> result = orderBusinessService.getOrdersByStatus(OrderStatus.NEW);
+
+        assertThat(result).isEmpty();
+        verify(dataServiceClient, times(1)).getOrdersByStatus(eq(OrderStatus.NEW), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Отправка заказа на проверку - успех")
+    void submitForReview_ShouldDelegateToClient() {
+        doNothing().when(dataServiceClient).submitForReview(1L, "file-url.png");
+
+        orderBusinessService.submitForReview(1L, "file-url.png");
+
+        verify(dataServiceClient, times(1)).submitForReview(1L, "file-url.png");
+    }
+
+    @Test
+    @DisplayName("Отправка заказа на проверку - ошибка клиента")
+    void submitForReview_WhenException_ThrowsRuntimeException() {
+        doThrow(new RuntimeException("Client error")).when(dataServiceClient).submitForReview(1L, "file-url.png");
+
+        assertThatThrownBy(() -> orderBusinessService.submitForReview(1L, "file-url.png"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to submit order for review");
+    }
+
+    @Test
+    @DisplayName("Обновление финального файла - успех")
+    void updateFinalFile_ShouldDelegateToClient() {
+        doNothing().when(dataServiceClient).updateFinalFile(1L, "new-file.png");
+
+        orderBusinessService.updateFinalFile(1L, "new-file.png");
+
+        verify(dataServiceClient, times(1)).updateFinalFile(1L, "new-file.png");
+    }
+
+    @Test
+    @DisplayName("Начало выполнения заказа - успех")
+    void startOrder_ShouldDelegateToClient() {
+        doNothing().when(dataServiceClient).startOrder(1L);
+
+        orderBusinessService.startOrder(1L);
+
+        verify(dataServiceClient, times(1)).startOrder(1L);
+    }
+
+    @Test
+    @DisplayName("Завершение заказа - успех")
+    void completeOrder_ShouldDelegateToClient() {
+        doNothing().when(dataServiceClient).completeOrder(1L);
+
+        orderBusinessService.completeOrder(1L);
+
+        verify(dataServiceClient, times(1)).completeOrder(1L);
+    }
+
+    @Test
+    @DisplayName("Отмена заказа - успех")
+    void cancelOrder_ShouldDelegateToClient() {
+        doNothing().when(dataServiceClient).cancelOrder(1L);
+
+        orderBusinessService.cancelOrder(1L);
+
+        verify(dataServiceClient, times(1)).cancelOrder(1L);
+    }
+
+    @Test
+    @DisplayName("Получение заработка художника - успех")
+    void getArtistEarnings_ShouldReturnEarnings() {
+        when(dataServiceClient.getArtistEarnings(2L)).thenReturn(BigDecimal.valueOf(1500));
+
+        BigDecimal result = orderBusinessService.getArtistEarnings(2L);
+
+        assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(1500));
+        verify(dataServiceClient, times(1)).getArtistEarnings(2L);
+    }
+
+    @Test
+    @DisplayName("Получение заработка художника - ошибка API, возвращает 0")
+    void getArtistEarnings_WhenException_ReturnsZero() {
+        when(dataServiceClient.getArtistEarnings(2L)).thenThrow(new RuntimeException("API Error"));
+
+        BigDecimal result = orderBusinessService.getArtistEarnings(2L);
+
+        assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+        verify(dataServiceClient, times(1)).getArtistEarnings(2L);
+    }
+
+// тесты на ошибки
+
+    @Test
+    @DisplayName("Получение заказа по ID - ошибка API")
+    void getOrder_WhenException_ThrowsRuntimeException() {
+        when(dataServiceClient.getOrderById(1L)).thenThrow(new RuntimeException("API Error"));
+
+        assertThatThrownBy(() -> orderBusinessService.getOrder(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to get order");
+    }
+
+    @Test
+    @DisplayName("Получение заказов заказчика - ошибка API, возвращает пустой список")
+    void getOrdersByCustomer_WhenException_ReturnsEmptyList() {
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenThrow(new RuntimeException("API Error"));
+
+        List<OrderDto> result = orderBusinessService.getOrdersByCustomer(1L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Получение заказов художника - ошибка API, возвращает пустой список")
+    void getOrdersByArtist_WhenException_ReturnsEmptyList() {
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenThrow(new RuntimeException("API Error"));
+
+        List<OrderDto> result = orderBusinessService.getOrdersByArtist(2L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Начало заказа - ошибка клиента")
+    void startOrder_WhenException_ThrowsRuntimeException() {
+        doThrow(new RuntimeException("Client error")).when(dataServiceClient).startOrder(1L);
+
+        assertThatThrownBy(() -> orderBusinessService.startOrder(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to start order");
+    }
+
+    @Test
+    @DisplayName("Завершение заказа - ошибка клиента")
+    void completeOrder_WhenException_ThrowsRuntimeException() {
+        doThrow(new RuntimeException("Client error")).when(dataServiceClient).completeOrder(1L);
+
+        assertThatThrownBy(() -> orderBusinessService.completeOrder(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to complete order");
+    }
+
+    @Test
+    @DisplayName("Отмена заказа - ошибка клиента")
+    void cancelOrder_WhenException_ThrowsRuntimeException() {
+        doThrow(new RuntimeException("Client error")).when(dataServiceClient).cancelOrder(1L);
+
+        assertThatThrownBy(() -> orderBusinessService.cancelOrder(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to cancel order");
+    }
+
+    @Test
+    @DisplayName("Обновление статуса заказа - ошибка клиента")
+    void updateOrderStatus_WhenException_ThrowsRuntimeException() {
+        doThrow(new RuntimeException("Client error")).when(dataServiceClient).updateOrderStatus(1L, OrderStatus.COMPLETED);
+
+        assertThatThrownBy(() -> orderBusinessService.updateOrderStatus(1L,
+                OrderStatus.COMPLETED))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to update order status");
+    }
+
+    @Test
+    @DisplayName("Обновление финального файла - ошибка клиента")
+    void updateFinalFile_WhenException_ThrowsRuntimeException() {
+        doThrow(new RuntimeException("Client error")).when(dataServiceClient).updateFinalFile(1L, "file.png");
+
+        assertThatThrownBy(() -> orderBusinessService.updateFinalFile(1L,
+                "file.png"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to update final file");
+    }
+
+    @Test
+    @DisplayName("Расчёт общей суммы заказов заказчика - пустой список")
+    void calculateTotalSpent_WhenNoOrders_ReturnsZero() {
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        BigDecimal result = orderBusinessService.calculateTotalSpent(1L);
+
+        assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("Получение количества завершённых заказов художника - пустой список")
+    void getCompletedOrdersCount_WhenNoOrders_ReturnsZero() {
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        long result = orderBusinessService.getCompletedOrdersCount(2L);
+
+        assertThat(result).isEqualTo(0L);
+    }
+
+// ещё тесты
+
+    @Test
+    @DisplayName("Создание заказа - ошибка клиента")
+    void createOrder_WhenException_ThrowsRuntimeException() {
+        CreateOrderRequestDto request = CreateOrderRequestDto.builder()
+                .customerId(1L)
+                .artistId(2L)
+                .description("Test order")
+                .price(BigDecimal.valueOf(1000))
+                .build();
+
+        when(dataServiceClient.createOrder(anyLong(), anyLong(), anyString(), any(BigDecimal.class)))
+                .thenThrow(new RuntimeException("API Error"));
+
+        assertThatThrownBy(() -> orderBusinessService.createOrder(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to create order");
+    }
+
+    @Test
+    @DisplayName("Получение заказов заказчика - пустой список от API")
+    void getOrdersByCustomer_WhenPageIsNull_ReturnsEmptyList() {
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenReturn(null);
+
+        List<OrderDto> result = orderBusinessService.getOrdersByCustomer(1L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Получение заказов художника - пустой список от API")
+    void getOrdersByArtist_WhenPageIsNull_ReturnsEmptyList() {
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenReturn(null);
+
+        List<OrderDto> result = orderBusinessService.getOrdersByArtist(2L);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Получение заказов по статусу - пустой список от API")
+    void getOrdersByStatus_WhenPageIsNull_ReturnsEmptyList() {
+        when(dataServiceClient.getOrdersByStatus(eq(OrderStatus.NEW), any(Pageable.class)))
+                .thenReturn(null);
+
+        List<OrderDto> result = orderBusinessService.getOrdersByStatus(OrderStatus.NEW);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Расчёт общей суммы - ошибка API, возвращает 0")
+    void calculateTotalSpent_WhenException_ReturnsZero() {
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenThrow(new RuntimeException("API Error"));
+
+        BigDecimal result = orderBusinessService.calculateTotalSpent(1L);
+
+        assertThat(result).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("Получение количества завершённых заказов - ошибка API, возвращает 0")
+    void getCompletedOrdersCount_WhenException_ReturnsZero() {
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenThrow(new RuntimeException("API Error"));
+
+        long result = orderBusinessService.getCompletedOrdersCount(2L);
+
+        assertThat(result).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("Расчёт общей суммы - заказы с разными статусами")
+    void calculateTotalSpent_ShouldSumOnlyCompletedOrders() {
+        OrderDto completedOrder = OrderDto.builder()
+                .status(OrderStatus.COMPLETED)
+                .price(BigDecimal.valueOf(1000))
+                .build();
+        OrderDto anotherCompletedOrder = OrderDto.builder()
+                .status(OrderStatus.COMPLETED)
+                .price(BigDecimal.valueOf(500))
+                .build();
+        OrderDto inProgressOrder = OrderDto.builder()
+                .status(OrderStatus.IN_PROGRESS)
+                .price(BigDecimal.valueOf(300))
+                .build();
+        OrderDto cancelledOrder = OrderDto.builder()
+                .status(OrderStatus.CANCELLED)
+                .price(BigDecimal.valueOf(200))
+                .build();
+
+        List<OrderDto> orders = Arrays.asList(completedOrder, anotherCompletedOrder, inProgressOrder, cancelledOrder);
+        when(dataServiceClient.getOrdersByCustomer(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(orders));
+
+        BigDecimal result = orderBusinessService.calculateTotalSpent(1L);
+
+        assertThat(result).isEqualByComparingTo(BigDecimal.valueOf(1500));
+    }
+
+    @Test
+    @DisplayName("Подсчёт завершённых заказов - считает только COMPLETED")
+    void getCompletedOrdersCount_ShouldCountOnlyCompleted() {
+        OrderDto completedOrder = OrderDto.builder().status(OrderStatus.COMPLETED).build();
+        OrderDto anotherCompletedOrder = OrderDto.builder().status(OrderStatus.COMPLETED).build();
+        OrderDto inProgressOrder = OrderDto.builder().status(OrderStatus.IN_PROGRESS).build();
+        OrderDto reviewOrder = OrderDto.builder().status(OrderStatus.REVIEW).build();
+
+        List<OrderDto> orders = Arrays.asList(completedOrder, anotherCompletedOrder, inProgressOrder, reviewOrder);
+        when(dataServiceClient.getOrdersByArtist(eq(2L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(orders));
+
+        long result = orderBusinessService.getCompletedOrdersCount(2L);
+
+        assertThat(result).isEqualTo(2);
     }
 }
