@@ -1,5 +1,8 @@
 by/step/config/JwtTokenProvider.class
+by/step/dto/RegistrationRequestDto.class
 by/step/dto/SocialLinkDto$SocialLinkDtoBuilder.class
+by/step/config/FeignConfig.class
+by/step/controller/StudioController.class
 by/step/dto/ArtistProfileDto.class
 by/step/dto/MessageDto$MessageDtoBuilder.class
 by/step/dto/MessageDto.class
@@ -8,13 +11,16 @@ by/step/dto/OrderDto.class
 by/step/enums/UserRole.class
 by/step/enums/OrderStatus.class
 by/step/client/DataServiceClient.class
+by/step/controller/MessageController.class
 by/step/dto/SocialLinkDto.class
 by/step/dto/ApiResponseDto.class
 by/step/BusinessServiceApplication.class
 by/step/dto/OrderDto$OrderDtoBuilder.class
 by/step/service/UserBusinessService.class
+by/step/dto/RegistrationRequestDto$RegistrationRequestDtoBuilder.class
 by/step/dto/StudioDto.class
 by/step/dto/ErrorResponseDto$ErrorResponseDtoBuilder.class
+by/step/config/CacheConfig.class
 by/step/dto/UserDto$UserDtoBuilder.class
 by/step/dto/UserDto.class
 by/step/dto/CreateOrderRequestDto.class
